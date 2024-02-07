@@ -1,5 +1,6 @@
-// KindaCode.com
-// main.dart
+// flutter pub add sqflite - в консоль
+// flutter pub add sqflite - в консоль
+// flutter pub add sqflite - в консоль
 import 'package:flutter/material.dart';
 
 import 'sql_helper.dart';
