@@ -1,8 +1,7 @@
-// flutter pub add sqflite - в консоль
-// flutter pub add sqflite - в консоль
-// flutter pub add sqflite - в консоль
 import 'package:flutter/material.dart';
-
+import 'dart:ffi';
+import 'package:flutter/src/widgets/basic.dart';
+import 'package:sqlite3/sqlite3.dart' hide Row;
 import 'sql_helper.dart';
 
 void main() {
@@ -17,7 +16,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       // Удалить баннер отладки
         debugShowCheckedModeBanner: false,
-        title: 'Kindacode.com',
         theme: ThemeData(
           primarySwatch: Colors.orange,
         ),
@@ -33,13 +31,13 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Все журналы
+  // Журнал
   List<Map<String, dynamic>> _journals = [];
 
   bool _isLoading = true;
   // Эта функция используется для извлечения всех данных из базы данных
   void _refreshJournals() async {
-    final data = await SQLHelper.getItems();
+    final data = await getItems();
     setState(() {
       _journals = data;
       _isLoading = false;
@@ -49,25 +47,26 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _refreshJournals(); // Загрузка дневника при запуске приложения
+    _refreshJournals(); // Загрузка журнала при запуске приложения
   }
 
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _profitController = TextEditingController();
 
   // Загрузка дневника при запуске приложения
   // Эта функция будет активирована при нажатии плавающей кнопки
-  // Она также будет активирована, когда вы захотите обновить элемент
+  // Она также будет активирована, когда обновляется элемент
   void _showForm(int? id) async {
     if (id != null) {
       // id == null -> создать новый элемент
       // id != null -> обновить существующий элемент
       final existingJournal =
-      _journals.firstWhere((element) => element['id'] == id);
-      _titleController.text = existingJournal['title'];
-      _descriptionController.text = existingJournal['description'];
+      _journals.firstWhere((element) => element['ID'] == id);
+      _nameController.text = existingJournal['name'];
+      _profitController.text = existingJournal['profit'];
     }
 
+    //окно для добавления/редактирования
     showModalBottomSheet(
         context: context,
         elevation: 5,
@@ -85,15 +84,15 @@ class _HomePageState extends State<HomePage> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               TextField(
-                controller: _titleController,
-                decoration: const InputDecoration(hintText: 'Title'),
+                controller: _nameController,
+                decoration: const InputDecoration(hintText: 'name'),
               ),
               const SizedBox(
                 height: 10,
               ),
               TextField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(hintText: 'Description'),
+                controller: _profitController,
+                decoration: const InputDecoration(hintText: 'profit'),
               ),
               const SizedBox(
                 height: 20,
@@ -109,11 +108,11 @@ class _HomePageState extends State<HomePage> {
                     await _updateItem(id);
                   }
 
-                  // Очистите текстовые поля
-                  _titleController.text = '';
-                  _descriptionController.text = '';
+                  // Очистить текстовые поля
+                  _profitController.text = '';
+                  _profitController.text = '';
 
-                  // Закройте нижний лист
+                  // Закрывается нижний лист
                   if (!mounted) return;
                   Navigator.of(context).pop();
                 },
@@ -126,21 +125,19 @@ class _HomePageState extends State<HomePage> {
 
 // Вставить новый журнал в базу данных
   Future<void> _addItem() async {
-    await SQLHelper.createItem(
-        _titleController.text, _descriptionController.text);
+    createItem(_nameController.text, _profitController.text);
     _refreshJournals();
   }
 
   // Обновить существующий журнал
   Future<void> _updateItem(int id) async {
-    await SQLHelper.updateItem(
-        id, _titleController.text, _descriptionController.text);
+    updateItem(id, _nameController.text, _profitController.text);
     _refreshJournals();
   }
 
   // Удалить объект
   void _deleteItem(int id) async {
-    await SQLHelper.deleteItem(id);
+    deleteItem(id);
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
       content: Text('Successfully deleted a journal!'),
     ));
@@ -151,7 +148,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kindacode.com'),
+        title: const Text('Урок SQL'),
       ),
       body: _isLoading
           ? const Center(
@@ -163,24 +160,25 @@ class _HomePageState extends State<HomePage> {
           color: Colors.orange[200],
           margin: const EdgeInsets.all(15),
           child: ListTile(
-              title: Text(_journals[index]['title']),
-              subtitle: Text(_journals[index]['description']),
+              title: Text(_journals[index]['name']),
+              subtitle: Text(_journals[index]['profit']),
               trailing: SizedBox(
                 width: 100,
                 child: Row(
                   children: [
                     IconButton(
                       icon: const Icon(Icons.edit),
-                      onPressed: () => _showForm(_journals[index]['id']),
+                      onPressed: () => _showForm(_journals[index]['name']),
                     ),
                     IconButton(
                       icon: const Icon(Icons.delete),
                       onPressed: () =>
-                          _deleteItem(_journals[index]['id']),
+                          _deleteItem(_journals[index]['ID']),
                     ),
                   ],
                 ),
-              )),
+              ),
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
