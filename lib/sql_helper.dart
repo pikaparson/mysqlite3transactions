@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:sqlite3/sqlite3.dart';
-
+import 'dart:ffi';
 //создание таблицы
 //class SQLHelper {
  // static Future<void> createTables(sql.Database database) async {
@@ -47,7 +47,7 @@ import 'package:sqlite3/sqlite3.dart';
   // чтение всех объектов (journals) --- было STATIC
   Future<List<Map<String, dynamic>>> getItems() async {
     final db = await sqlite3.open('DataBase/family_budget_rosneft.db');
-    final d = await db.select("SELECT * FROM types ORDER BY ID");
+    final d = await db.select("SELECT * FROM types"); // ORDER BY ID
     db.dispose();
     return d;
     //query('types', orderBy: "ID");
